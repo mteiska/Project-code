@@ -40,7 +40,7 @@ treedata.Insert("Poikkeustenkäsittely","Exceptissä väärä virhetyyppi tiedos
     "Exceptissä väärä virhetyyppi tiedostonkäsittelyssä",values=[-1.4,2])
 treedata.Insert("Poikkeustenkäsittely","Exceptissä väärä virhetyyppi tiedostonkäsittelyssä",
     "Exceptissä väärä virhetyyppi tiedostonkäsittelyssä",values=[-2.1,3])
-
+print("testing")
 ### Layout for GUI ###
 layout = [
    [sg.Tree(data=treedata,
