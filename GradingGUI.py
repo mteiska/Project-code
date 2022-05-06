@@ -1,4 +1,5 @@
 from calendar import c
+from lib2to3.pytree import Node
 from turtle import left, right
 import PySimpleGUI as sg
 import os
@@ -24,27 +25,25 @@ starting_path = sg.popup_get_folder('Anna näytettävä kansio')
 if not starting_path:
     sys.exit(0)
 
-### Create Tree Structure for possible problems ###
+### Create Tree Structure for problems ###
 treedata = sg.TreeData()
 
 treedata.Insert("", 'Tietorakenne', 'Tietorakenne',
     ['import ei ole päätasolla', 'import ei tiedoston alussa (ei ennen aliohjelmia ja luokkia)','Lähdekooditiedostoja puuttuu',
     'Pääohjelmatiedostossa vain kutsu kirjastoon'])
-treedata.Insert("Tietorakenne", 'import ei ole päätasolla', 'import ei ole päätasolla', [2,1])
+treedata.Insert("Tietorakenne", 'import ei ole päätasolla', 'import ei ole päätasolla', [0])
 treedata.Insert("Tietorakenne", 'import ei tiedoston alussa (ei ennen aliohjelmia ja luokkia)', 
-    'import ei tiedoston alussa (ei ennen aliohjelmia ja luokkia)', [-1,'ei yhtään oikein'])
-treedata.Insert("", "Poikkeustenkäsittely","Poikkeustenkäsittely",values=[])
+    'import ei tiedoston alussa (ei ennen aliohjelmia ja luokkia)', [0])
+treedata.Insert("", "Poikkeustenkäsittely","Poikkeustenkäsittely",values=[0])
 treedata.Insert("Poikkeustenkäsittely","Exceptissä väärä virhetyyppi tiedostonkäsittelyssä",
-    "Exceptissä väärä virhetyyppi tiedostonkäsittelyssä",values=[-0.7,1])
-treedata.Insert("Poikkeustenkäsittely","Exceptissä väärä virhetyyppi tiedostonkäsittelyssä",
-    "Exceptissä väärä virhetyyppi tiedostonkäsittelyssä",values=[-1.4,2])
-treedata.Insert("Poikkeustenkäsittely","Exceptissä väärä virhetyyppi tiedostonkäsittelyssä",
-    "Exceptissä väärä virhetyyppi tiedostonkäsittelyssä",values=[-2.1,3])
-print("testing")
+    "Exceptissä väärä virhetyyppi tiedostonkäsittelyssä",values=[0])
+
+
+
 ### Layout for GUI ###
 layout = [
    [sg.Tree(data=treedata,
-                   headings=['Vakavuus','lukumäärä' ],
+                   headings=['lukumäärä' ],
                    auto_size_columns=True,
                    select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
                    num_rows=15,
@@ -55,7 +54,7 @@ layout = [
                    enable_events=True,
                    expand_x=True,
                    expand_y=True,
-                   ),],
+                   ),sg.Button('+',key='+'),sg.Button('-',key='-')],
     [sg.Text('Opiskelijapalaute'), sg.Text('Tarkastaja'), sg.Push(), sg.Text('Arvioitavat tiedostot')], 
     [sg.InputCombo(('Harjoitustyön palautus 1', 'Harjoitustyön palautus 2'), size=(20, 1)), 
     sg.InputCombo(('Mika/TA', 'Joku/TA'), size=(15, 1)), sg.Listbox(['HTKirjasto.py', 'HTPaaohjelma.py'], no_scrollbar=False,  s=(15,2))],      
@@ -76,9 +75,10 @@ def add_files_in_folder(parent, dirname):
 add_files_in_folder('', starting_path)
 
 window = sg.Window('Grading tool', layout, resizable=True)
+
 while True:
     event, values = window.read()
-    if event == sg.WIN_CLOSED:
+    if event == 'Exit' or sg.WIN_CLOSED:
         break
     if event == 'virhe':
         if values['virhe'] in virhelista.keys():
@@ -89,8 +89,32 @@ while True:
             print(values['virhe'])
             virhelista[values['virhe']] = virheen_lukumaara
             print(virhelista[values['virhe']])
+    print(event, "Values are these after this:", values)
+    
+    if event == '+':
+        if values['-TREE-'][0] in virhelista.keys():
+          virhelista[values['-TREE-'][0]] = virhelista[values['-TREE-'][0]] + 1
+          print(virhelista[values['-TREE-'][0]])
+        else:
+            virheen_lukumaara = 1
+        
+            virhelista[values['-TREE-'][0]] = virheen_lukumaara
+            print(virhelista[values['-TREE-'][0]])
+        window['-TREE-'].update(key = values['-TREE-'][0],value = virhelista[values['-TREE-'][0]])
 
-            
+    if event == '-':
+        if virhelista[values['-TREE-'][0]] >0:
+            if values['-TREE-'][0] in virhelista.keys():
+                virhelista[values['-TREE-'][0]] = virhelista[values['-TREE-'][0]] - 1
+                print(virhelista[values['-TREE-'][0]])
+            else:
+                virheen_lukumaara = 1
+        
+                virhelista[values['-TREE-'][0]] = virheen_lukumaara
+                print(virhelista[values['-TREE-'][0]])
+            window['-TREE-'].update(key = values['-TREE-'][0],value = virhelista[values['-TREE-'][0]])
+       
+       
 
   
       
