@@ -73,7 +73,7 @@ layout = [
     sg.InputCombo(('Mika/TA', 'Joku/TA'), size=(15, 1)), sg.Listbox(['HTKirjasto.py', 'HTPaaohjelma.py'], no_scrollbar=False,  s=(15,2))],      
     [sg.ButtonMenu(
     'Ongelmat', menu_def=aliluokka_rakenne, size=(30,1), key = 'virhe')],      
-    [sg.Button('Go'), sg.Button('Exit')]  ]  
+    [sg.Button('Laske virhepisteet'), sg.Button('Exit')]  ]  
 
 def add_files_in_folder(parent, dirname):
     files = os.listdir(dirname)
@@ -182,7 +182,7 @@ def main():
                     virhelista[values['-TREE-'][0]] = virheen_lukumaara
 
             window['-TREE-'].update(key = values['-TREE-'][0], value = virhelista[values['-TREE-'][0]])
-        if  event == 'Go':
+        if  event == 'Laske virhepisteet':
             for virhe in list:
                 
                 if virhe.virhe in virhelista.keys():
