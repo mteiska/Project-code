@@ -110,11 +110,16 @@ def add_files_in_folder(parent, dirname):
         else:
             studentdata.Insert(parent, fullname, f, values=[])
             
-def update_tree_data(students, studentdata):
+def update_tree_data(students):
+    ready_studentdata = sg.TreeData()
     for id in students:
-        studentdata.Insert('',id,id,values=[])
-    students.clear()
-    return studentdata
+        ready_studentdata.Insert('',id,id,values=[])
+    return ready_studentdata
+
+def key_define(tree):
+    item =  tree.Widget.selection()
+    return '' if len(item) == 0 else tree.IdToKey[item[0]]
+
 
 
 
@@ -161,7 +166,7 @@ def read_csv_and_make_object(file):
             
         
 def main():
-    ready_studentdata = sg.TreeData()
+    
     virhepisteet = 0
     add_files_in_folder('', starting_path)
     list = read_csv_and_make_object('//maa1.cc.lut.fi/home/h18439/Desktop/Project code/arviointiohjeet_HT.xlsx')
@@ -169,7 +174,7 @@ def main():
 
     while True:
         event, values = window.read()
-        
+        studenttree = window['-PROGRAMS-']
         if event == 'Exit' or event == sg.WIN_CLOSED:
             break
         if event == 'virhe':
@@ -217,13 +222,8 @@ def main():
             virhelista[values['-TREE-'][0]] = 0
         ### If row selected and to dict ###
         if event == '-PROGRAMS-':
-            item =  window['-PROGRAMS-'].Widget.selection()
-            if len(item) == 0:
-                continue
+            key = key_define(studenttree)
             
-            else:
-               key = window['-PROGRAMS-'].IdToKey[item[0]]
-
             node = studentdata.tree_dict[key]
             parent_node = studentdata.tree_dict[node.parent]
             if node.parent == '':
@@ -238,7 +238,7 @@ def main():
         if event == 'SAVE':
             print("Paluuarvot programsista on : ", values['-PROGRAMS-'][0])
             
-            paluuarvo = update_tree_data(students, ready_studentdata)
+            paluuarvo = update_tree_data(students)
             window['-READY-'].update(values=paluuarvo)
 
             
