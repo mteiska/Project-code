@@ -14,19 +14,11 @@ sg.theme('BlueMono')
 virhelista = {}
 basenames=[]
 virheen_lukumaara = 0    
-aliluokka_rakenne=[
-    'Alaluokat',['TiedostoRakenne',
-    ['import ei ole päätasolla', 'import ei tiedoston alussa (ei ennen aliohjelmia ja luokkia)','Lähdekooditiedostoja puuttuu',
-    'Pääohjelmatiedostossa vain kutsu kirjastoon'],
-    'Tiedostonkäsittely',
-    [['Tiedosto sulkematta'],
-    ]]]
 
 class Virhetiedot:
     virhe = "",
     vakavuus = 0
     lukumaara = 0
-
 
 starting_path = sg.popup_get_folder('Anna näytettävä kansio')
 
@@ -34,6 +26,9 @@ if not starting_path:
     sys.exit(0)
 
 ### Create Tree Structure for problems ###
+
+studentdata = sg.TreeData()
+
 treedata = sg.TreeData()
 treedata.Insert("", 'Toiminnallisuus', 'Toiminnallisuus',
     [0])
@@ -52,38 +47,52 @@ treedata.Insert("Poikkeustenkäsittely","Exceptissä väärä virhetyyppi tiedos
 
 
 ### Layout for GUI ###
-layout = [
+layout = [[sg.Text('Opiskelijat')],
+         [sg.Tree(data=studentdata,
+                   headings=[],
+                   auto_size_columns=True,
+                   select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
+                   num_rows=15,
+                   col0_width=7,
+                   key='-PROGRAMS-',
+                   show_expanded=False,
+                   pad = (2,2),
+                   enable_events=True,
+                   expand_x=True,
+                   expand_y=True,
+                   )],
+
     [sg.Push(),sg.Text('Laita virheen koodi tähän.')],
    [sg.Tree(data=treedata,
                    headings=['lukumäärä' ],
                    auto_size_columns=False,
                    select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
                    num_rows=15,
-                   col0_width=15,
+                   col0_width=12,
                    key='-TREE-',
                    show_expanded=False,
                    pad = (5,5),
                    enable_events=True,
                    expand_x=True,
                    expand_y=True,
-                   ),sg.Button('+',key='+'),sg.Button('-',key='-'), sg.Multiline(key = 'virheteksti', size = (20,10))],
+                   ),sg.Button('+',key='+'),sg.Button('-',key='-'), sg.Button('Ei yhtään oikein', key = 'ALL'), sg.Multiline(key = 'virheteksti', size = (20,10)), ],
+                   
    
-    [sg.Text('Opiskelijapalaute'), sg.Text('Tarkastaja'), sg.Push(), sg.Text('Arvioitavat tiedostot')], 
-    [sg.InputCombo(('Harjoitustyön palautus 1', 'Harjoitustyön palautus 2'), size=(20, 1)), 
-    sg.InputCombo(('Mika/TA', 'Joku/TA'), size=(15, 1)), sg.Listbox(['HTKirjasto.py', 'HTPaaohjelma.py'], no_scrollbar=False,  s=(15,2))],      
-    [sg.ButtonMenu(
-    'Ongelmat', menu_def=aliluokka_rakenne, size=(30,1), key = 'virhe')],      
-    [sg.Button('Go'), sg.Button('Exit')]  ]  
+        [sg.Text('Opiskelijapalaute'), sg.Text('Tarkastaja'), sg.Push(), sg.Text('Arvioitavat tiedostot')], 
+        [sg.InputCombo(('Harjoitustyön palautus 1', 'Harjoitustyön palautus 2'), size=(20, 1)), 
+            sg.InputCombo(('Mika/TA', 'Joku/TA'), size=(15, 1)), sg.Listbox(['HTKirjasto.py', 'HTPaaohjelma.py'], no_scrollbar=False,  s=(15,2))],      
+        [sg.Button('Laske virhepisteet'), sg.Button('Tallenna', key = 'SAVE'), sg.Button('Exit')]  ]  
+
 
 def add_files_in_folder(parent, dirname):
     files = os.listdir(dirname)
     for f in files:
         fullname = os.path.join(dirname, f)
         if os.path.isdir(fullname):            # if folder, add folder and recurse
-            treedata.Insert(parent, fullname, f, values=[])
+            studentdata.Insert(parent, fullname, f, values=[])
             add_files_in_folder(fullname, fullname)
         else:
-            treedata.Insert(parent, fullname, f, values=[os.stat(fullname).st_size])   
+            studentdata.Insert(parent, fullname, f, values=[])   
 
 ### Protyping for error score calculating ###
 def read_csv_and_make_object(file):
@@ -93,7 +102,10 @@ def read_csv_and_make_object(file):
     lista = []
    
  
-    with open('arviointiohjeet_HT.csv',"r", encoding ="utf-8") as csv_file:
+
+
+ 
+    with open('//maa1.cc.lut.fi/home/h18439/Desktop/Project code/arviointiohjeet_HT.csv',"r", encoding ="utf-8") as csv_file:
           csv_file.readline()
           csv_reader = csv.reader(csv_file, delimiter=",")
           for row in csv_reader:
@@ -101,22 +113,14 @@ def read_csv_and_make_object(file):
                 continue
             if row:
                 print (row)
-
-       
-                
-      
-        
                 v = Virhetiedot()
-               
-        
-           
+            
                 if row[1] == "" and row[3] != 'Ei yhtään oikein' and row[3] != 'Kaikista':
                     v.virhe = lista[len(lista)-1].virhe
                     v.vakavuus = float(row[2]) 
                     v.lukumaara = float(row[3])
                     lista.append(v)
                 
-            
                 else:
                     if (row[3] == 'Ei yhtään oikein' or row[3] == 'Kaikista'):
                         row[3] = 100.0
@@ -128,20 +132,12 @@ def read_csv_and_make_object(file):
                     v.vakavuus = float(row[2])
                     v.lukumaara = float(row[3])
                     lista.append(v)
-    
-        
-      
-        
-      
            
     for i in lista:
         print(i.virhe, i.vakavuus, i.lukumaara)
     return lista
     #When we have list we can comapre it to programs dict and get the error score
             
-
-
-
         
 def main():
     virhepisteet = 0
@@ -182,21 +178,28 @@ def main():
                     virhelista[values['-TREE-'][0]] = virheen_lukumaara
 
             window['-TREE-'].update(key = values['-TREE-'][0], value = virhelista[values['-TREE-'][0]])
-        if  event == 'Go':
+        if  event == 'Laske virhepisteet':
             for virhe in list:
                 
                 if virhe.virhe in virhelista.keys():
-                    print("Listalla virheiden lukumäärä: ", virhe.lukumaara)
+                    print("Listalla virheiden lukumäärä: ", virhe.lukumaara, "Virheen vakavuus: ", virhe.vakavuus)
                     print(virhelista[values['-TREE-'][0]])
                     if int(virhe.lukumaara) <= virhelista[values['-TREE-'][0]]:
                         virhepisteet = virhepisteet + virhe.vakavuus
                         print("Virheen pisteet ovat :",virhepisteet)
 
 
-
 main()
 
         
+        
+          
+       
+
+  
+      
+
+ 
         
           
        
