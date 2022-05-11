@@ -13,7 +13,8 @@ import csv
 sg.theme('BlueMono')      
 virhelista = {}
 basenames=[]
-virheen_lukumaara = 0    
+virheen_lukumaara = 0   
+students = {} 
 
 class Virhetiedot:
     virhe = "",
@@ -30,6 +31,7 @@ if not starting_path:
 studentdata = sg.TreeData()
 
 treedata = sg.TreeData()
+
 treedata.Insert("", 'Toiminnallisuus', 'Toiminnallisuus',
     [0])
 treedata.Insert("Toiminnallisuus", 'Kovakoodattu tuloksia', 'Kovakoodattu tuloksia', [0])
@@ -60,7 +62,21 @@ layout = [[sg.Text('Opiskelijat')],
                    enable_events=True,
                    expand_x=True,
                    expand_y=True,
-                   )],
+                   ),
+        sg.Tree(data=studentdata,
+                   headings=[],
+                   auto_size_columns=True,
+                   select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
+                   num_rows=15,
+                   col0_width=7,
+                   key='-READY-',
+                   show_expanded=False,
+                   pad = (2,2),
+                   enable_events=True,
+                   expand_x=True,
+                   expand_y=True,
+                   )
+                   ],
 
     [sg.Push(),sg.Text('Laita virheen koodi tähän.')],
    [sg.Tree(data=treedata,
@@ -87,23 +103,28 @@ layout = [[sg.Text('Opiskelijat')],
 def add_files_in_folder(parent, dirname):
     files = os.listdir(dirname)
     for f in files:
-        fullname = os.path.join(dirname, f)
+        fullname = os.path.join(dirname, f).replace("\\","/")
         if os.path.isdir(fullname):            # if folder, add folder and recurse
             studentdata.Insert(parent, fullname, f, values=[])
             add_files_in_folder(fullname, fullname)
         else:
-            studentdata.Insert(parent, fullname, f, values=[])   
+            studentdata.Insert(parent, fullname, f, values=[])
+            
+def update_tree_data(students, studentdata):
+    for id in students:
+        studentdata.Insert('',id,id,values=[])
+    students.clear()
+    return studentdata
+
+
+
 
 ### Protyping for error score calculating ###
 def read_csv_and_make_object(file):
     read_file = pd.read_excel ('//maa1.cc.lut.fi/home/h18439/Desktop/Project code/arviointiohjeet_HT.xlsx')
-    read_file.to_csv ('//maa1.cc.lut.fi/home/h18439/Desktop/Project code/arviointiohjeet_HT.csv', index = None, header=True)
+    read_file.to_csv ('arviointiohjeet_HT.csv', index = None, header=True, encoding='utf-8')
     
     lista = []
-   
- 
-
-
  
     with open('//maa1.cc.lut.fi/home/h18439/Desktop/Project code/arviointiohjeet_HT.csv',"r", encoding ="utf-8") as csv_file:
           csv_file.readline()
@@ -140,6 +161,7 @@ def read_csv_and_make_object(file):
             
         
 def main():
+    ready_studentdata = sg.TreeData()
     virhepisteet = 0
     add_files_in_folder('', starting_path)
     list = read_csv_and_make_object('//maa1.cc.lut.fi/home/h18439/Desktop/Project code/arviointiohjeet_HT.xlsx')
@@ -160,7 +182,7 @@ def main():
                 virhelista[values['virhe']] = virheen_lukumaara
                 print(virhelista[values['virhe']])
         print(event, "Values are these after this:", values)
-        
+        ### Adding to problem counter ###
         if event == '+' or event == '-':
             if event=='+':
                 if values['-TREE-'][0] in virhelista.keys():
@@ -168,7 +190,7 @@ def main():
                 else:
                     virheen_lukumaara = 1
                     virhelista[values['-TREE-'][0]] = virheen_lukumaara
-                
+          ### Decreasing problem counter ###      
             if event== '-':
                 if virhelista[values['-TREE-'][0]] >0:
                     if values['-TREE-'][0] in virhelista.keys():
@@ -178,6 +200,8 @@ def main():
                     virhelista[values['-TREE-'][0]] = virheen_lukumaara
 
             window['-TREE-'].update(key = values['-TREE-'][0], value = virhelista[values['-TREE-'][0]])
+        ### WIP: Counting mistakepoints but not finished
+        ### Needs JSON implementation
         if  event == 'Laske virhepisteet':
             for virhe in list:
                 
@@ -187,6 +211,40 @@ def main():
                     if int(virhe.lukumaara) <= virhelista[values['-TREE-'][0]]:
                         virhepisteet = virhepisteet + virhe.vakavuus
                         print("Virheen pisteet ovat :",virhepisteet)
+       ### All occurances are wrong ###
+        if event == 'ALL':
+            window['-TREE-'].update(key = values['-TREE-'][0], value = 'Kaikki')
+            virhelista[values['-TREE-'][0]] = 0
+        ### If row selected and to dict ###
+        if event == '-PROGRAMS-':
+            item =  window['-PROGRAMS-'].Widget.selection()
+            if len(item) == 0:
+                continue
+            
+            else:
+               key = window['-PROGRAMS-'].IdToKey[item[0]]
+
+            node = studentdata.tree_dict[key]
+            parent_node = studentdata.tree_dict[node.parent]
+            if node.parent == '':
+                continue
+            if(values['-PROGRAMS-'][0]!= node.parent):
+                if not students:
+                    students[values['-PROGRAMS-'][0]] = []
+                if values['-PROGRAMS-'][0] not in students:
+                    students[values['-PROGRAMS-'][0]] = []
+                print(node.parent)
+        ### Save added rows to other tree structure ###
+        if event == 'SAVE':
+            print("Paluuarvot programsista on : ", values['-PROGRAMS-'][0])
+            
+            paluuarvo = update_tree_data(students, ready_studentdata)
+            window['-READY-'].update(values=paluuarvo)
+
+            
+
+        
+
 
 
 main()
