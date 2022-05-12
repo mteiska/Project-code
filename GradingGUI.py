@@ -11,10 +11,7 @@ import csv
 #files_in_directory = os.listdir('C:/Users/mika.teiska@lut.fi/Downloads/OP_HT_Palautus1/HT_Palautus1_palautukset/minimi')
 #print(files_in_directory)
 sg.theme('BlueMono')      
-virhelista = {}
-basenames=[]
-virheen_lukumaara = 0   
-students = {} 
+
 
 class Virhetiedot:
     virhe = "",
@@ -86,7 +83,7 @@ layout = [[sg.Text('Opiskelijat')],
                    num_rows=15,
                    col0_width=12,
                    key='-TREE-',
-                   show_expanded=False,
+                   show_expanded=True,
                    pad = (5,5),
                    enable_events=True,
                    expand_x=True,
@@ -163,10 +160,27 @@ def read_csv_and_make_object(file):
         print(i.virhe, i.vakavuus, i.lukumaara)
     return lista
     #When we have list we can comapre it to programs dict and get the error score
+def mergedicts(dict1, dict2):
+    for k in set(dict1.keys()).union(dict2.keys()):
+        if k in dict1 and k in dict2:
+            if isinstance(dict1[k], dict) and isinstance(dict2[k], dict):
+                yield (k, dict(mergedicts(dict1[k], dict2[k])))
+            else:
+                # If one of the values is not a dict, you can't continue merging it.
+                # Value from second dict overrides one in first and we move on.
+                yield (k, dict2[k])
+                # Alternatively, replace this with exception raiser to alert you of value conflicts
+        elif k in dict1:
+            yield (k, dict1[k])
+        else:
+            yield (k, dict2[k])
+
             
         
 def main():
-    
+    virhelista = {}
+    virheen_lukumaara = 0   
+    students = {} 
     virhepisteet = 0
     add_files_in_folder('', starting_path)
     list = read_csv_and_make_object('//maa1.cc.lut.fi/home/h18439/Desktop/Project code/arviointiohjeet_HT.xlsx')
@@ -228,22 +242,31 @@ def main():
             parent_node = studentdata.tree_dict[node.parent]
             if node.parent == '':
                 continue
+            
             if(values['-PROGRAMS-'][0]!= node.parent):
+                path2 = values['-PROGRAMS-'][0].split('/')
+                path2 = path2[len(path2)-2]
                 if not students:
-                    students[values['-PROGRAMS-'][0]] = []
-                if values['-PROGRAMS-'][0] not in students:
-                    students[values['-PROGRAMS-'][0]] = []
-                print(node.parent)
+                    students[path2] = []
+                if path2 not in students:
+                    students[path2] = []
+            window['-TREE-'].update(values = treedata)
+            if virhelista:  #check if dict exists
+                virhelista = dict.fromkeys(virhelista, 0)
+                
         ### Save added rows to other tree structure ###
         if event == 'SAVE':
             print("Paluuarvot programsista on : ", values['-PROGRAMS-'][0])
             
             paluuarvo = update_tree_data(students)
             window['-READY-'].update(values=paluuarvo)
-
+            print(dict(mergedicts(virhelista,students)))
+           # D = dict(zip(students, virhelista))
+            #print(D)
             
 
-        
+
+        #{Opiskelija: {virhekoodi1: lkm1}, Opiskelija2: {Virhekoodi2: lkm2}}
 
 
 
