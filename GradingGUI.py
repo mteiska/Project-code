@@ -28,7 +28,8 @@ if not starting_path:
 studentdata = sg.TreeData()
 
 treedata = sg.TreeData()
-
+### Inserting original problem data to tree ###
+### WIP: change original data coming from JSON
 treedata.Insert("", 'Toiminnallisuus', 'Toiminnallisuus',
     [0])
 treedata.Insert("Toiminnallisuus", 'Kovakoodattu tuloksia', 'Kovakoodattu tuloksia', [0])
@@ -45,7 +46,7 @@ treedata.Insert("Poikkeustenkäsittely","Exceptissä väärä virhetyyppi tiedos
 
 
 
-### Layout for GUI ###
+            ### Layout for GUI ####
 layout = [[sg.Text('Opiskelijat')],
          [sg.Tree(data=studentdata,
                    headings=[],
@@ -95,7 +96,7 @@ layout = [[sg.Text('Opiskelijat')],
         [sg.InputCombo(('Harjoitustyön palautus 1', 'Harjoitustyön palautus 2'), size=(20, 1)), 
             sg.InputCombo(('Mika/TA', 'Joku/TA'), size=(15, 1)), sg.Listbox(['HTKirjasto.py', 'HTPaaohjelma.py'], no_scrollbar=False,  s=(15,2))],      
         [sg.Button('Laske virhepisteet'), sg.Button('Tallenna', key = 'SAVE'), sg.Button('Exit')]  ]  
-
+#################################################################################################
 
 def add_files_in_folder(parent, dirname):
     files = os.listdir(dirname)
@@ -106,17 +107,18 @@ def add_files_in_folder(parent, dirname):
             add_files_in_folder(fullname, fullname)
         else:
             studentdata.Insert(parent, fullname, f, values=[])
-            
+### Updating already reviewed programs list ####           
 def update_tree_data(students):
     ready_studentdata = sg.TreeData()
     for id in students:
         ready_studentdata.Insert('',id,id,values=[])
     return ready_studentdata
 
+### Nice to have function for finding selected elements key ###
 def key_define(tree):
     item =  tree.Widget.selection()
     return '' if len(item) == 0 else tree.IdToKey[item[0]]
-
+###############################################################
 
 
 
