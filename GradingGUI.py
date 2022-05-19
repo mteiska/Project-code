@@ -1,27 +1,19 @@
-
 from lib2to3.pytree import Node
-from turtle import left, right
 import PySimpleGUI as sg
 import os
 import sys
-import pandas as pd
 import csv
 import json
 from io import BytesIO
 from PIL import Image, ImageDraw
 
-#Just for testing how to get files in directory    
-#files_in_directory = os.listdir('C:/Users/mika.teiska@lut.fi/Downloads/OP_HT_Palautus1/HT_Palautus1_palautukset/minimi')
-#print(files_in_directory)
 sg.theme('BlueMono')      
-
 
 class Virhetiedot:
     virhe = "",
     vakavuus = 0
     lukumaara = 0
 treedata = sg.TreeData()
-
 
 def initiate_problem_list():
     lista = []
@@ -54,11 +46,6 @@ if not starting_path:
 ### Create Tree Structure for problems ###
 
 studentdata = sg.TreeData()
-
-
-
-
-
 
             ### Layout for GUI ####
 layout = [[sg.Text('Opiskelijat')],
@@ -112,9 +99,10 @@ layout = [[sg.Text('Opiskelijat')],
                    
    
         [sg.Text('Opiskelijapalaute'), sg.Text('Tarkastaja'), sg.Push(), sg.Text('Arvioitavat tiedostot')], 
-        [sg.InputCombo(('Harjoitustyön palautus 1', 'Harjoitustyön palautus 2'), size=(20, 1)), 
-            sg.InputCombo(('Mika/TA', 'Joku/TA'), size=(15, 1)), sg.Listbox(['HTKirjasto.py', 'HTPaaohjelma.py'], no_scrollbar=False,  s=(15,2))],      
-        [sg.Button('Laske virhepisteet'), sg.Button('Tallenna', key = 'SAVE'), sg.Button('Exit')]  ]  
+        [sg.InputCombo(('Harjoitustyön Palautus 1', 'Harjoitustyön Palautus 2', 'Korjaus Palautus'), size=(20, 1)), 
+            sg.InputCombo(('Mika/TA', 'Joku/TA'), size=(15, 1))],      
+        [sg.Button('Laske virhepisteet'), sg.Button('Tallenna', key = 'SAVE'), 
+        sg.Button('Kirjoita arvostellut työt tiedostoon', key='WRITE'), sg.Button('Exit')]  ]  
 #################################################################################################
 
 def add_files_in_folder(parent, dirname):
@@ -165,24 +153,15 @@ def icon(check):
         png = output.getvalue()
     return png
 
-check = [icon(0), icon(1), icon(2)]
-
+check = [icon(0), icon(1), icon(2)] # Three states Ready, In Progress, Unchecked
+#WIP: Usability of In Progress state
 ### Protyping for error score calculating ###
 
-def mergedicts(dict1, dict2):
-    for k in set(dict1.keys()).union(dict2.keys()):
-        if k in dict1 and k in dict2:
-            if isinstance(dict1[k], dict) and isinstance(dict2[k], dict):
-                yield (k, dict(mergedicts(dict1[k], dict2[k])))
-            else:
-                # If one of the values is not a dict, you can't continue merging it.
-                # Value from second dict overrides one in first and we move on.
-                yield (k, dict2[k])
-               
-        elif k in dict1:
-            yield (k, dict1[k])
-        else:
-            yield (k, dict2[k])
+def mergedicts(dict1, dict2, student):
+    dict2[student] = dict(dict1)
+    print(dict2)
+    
+
        
 def main():
     virhelista = {}
@@ -193,13 +172,12 @@ def main():
     list = initiate_problem_list()
     window = sg.Window('Grading tool', layout, resizable=True, finalize = True)
     
-    
+    tree = window['-PROGRAMS-']         # type: sg.Tree
+    tree.bind("<Double-1>", '+DOUBLE')  
     while True:
         event, values = window.read()
-        tree = window['-PROGRAMS-']         # type: sg.Tree
-        tree.bind("<Double-1>", '+DOUBLE')
+       
         if event == 'Exit' or event == sg.WIN_CLOSED:
-            tree.unbind("<Double-1>")
             break
         if event == 'virhe':
             if values['virhe'] in virhelista.keys():
@@ -229,8 +207,8 @@ def main():
                     virhelista[values['-TREE-'][0]] = virheen_lukumaara
 
             window['-TREE-'].update(key = values['-TREE-'][0], value = virhelista[values['-TREE-'][0]])
-        ### WIP: Counting mistakepoints but not finished
-        ### Needs JSON implementation
+        ### WIP: Counting mistakepoints right, taking account different constraints
+       
         if  event == 'Laske virhepisteet':
             for virhe in list:
                 
@@ -268,7 +246,8 @@ def main():
                     students[path2] = []
             window['-TREE-'].update(values = treedata)
             if virhelista:  #check if dict exists
-                virhelista = dict.fromkeys(virhelista, 0)
+                virhelista.clear()
+               #virhelista = dict.fromkeys(virhelista, 0)
 ###Adding checkboxes next to student names for easier marking ###
         if event.endswith('DOUBLE'):
             double_click(tree)
@@ -279,15 +258,15 @@ def main():
             
             paluuarvo = update_tree_data(students)
             window['-READY-'].update(values=paluuarvo)
-            print(dict(mergedicts(virhelista,students)))
-           # D = dict(zip(students, virhelista))
-            #print(D)
+            mergedicts(virhelista,students, path2)
+          
+        if event == 'WRITE':
+            with open("Arvostellut.json", "w") as outfile:
+                json.dump(students, outfile, indent=4)
+           
             
-
-
+        # Example dict structure after nesting #
         #{Opiskelija: {virhekoodi1: lkm1}, Opiskelija2: {Virhekoodi2: lkm2, virhekoodi3 : lkm3}}
-
-
 
 main()
 
