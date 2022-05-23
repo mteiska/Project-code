@@ -159,7 +159,6 @@ check = [icon(0), icon(1), icon(2)] # Three states Ready, In Progress, Unchecked
 
 def mergedicts(dict1, dict2, student):
     dict2[student] = dict(dict1)
-    print(dict2)
     
 
        
@@ -168,6 +167,7 @@ def main():
     virheen_lukumaara = 0   
     students = {} 
     virhepisteet = 0
+    virhekoodi = []
     add_files_in_folder('', starting_path)
     list = initiate_problem_list()
     window = sg.Window('Grading tool', layout, resizable=True, finalize = True)
@@ -230,12 +230,15 @@ def main():
             virhelista[values['-TREE-'][0]] = -1 ## -1 is easy repsesentation for all being wrong
         ### If row selected and to dict ###
         if event == '-PROGRAMS-':
+            virhekoodi.clear()
+
             key = key_define(tree)
             
             node = studentdata.tree_dict[key]
             parent_node = studentdata.tree_dict[node.parent]
             if node.parent == '':
                 continue
+            
             
             if(values['-PROGRAMS-'][0]!= node.parent):
                 path2 = values['-PROGRAMS-'][0].split('/')
@@ -256,9 +259,28 @@ def main():
         if event == 'SAVE':
             print("Paluuarvot programsista on : ", values['-PROGRAMS-'][0])
             
+         
             paluuarvo = update_tree_data(students)
             window['-READY-'].update(values=paluuarvo)
             mergedicts(virhelista,students, path2)
+            
+
+            if 'virhekoodi' in students[path2] :
+                print("Tämä tulee kun virhekoodia on annettu ",students)
+                students[path2]['virhekoodi'].append(values['virheteksti'])
+                print(students)
+               
+
+            else:
+                virhekoodi.append(values['virheteksti'])
+                virhelista['virhekoodi'] = virhekoodi.copy() #Adding copy of a list so program does not override existing value
+                print("Tämä tulee kun ei ole annettu arvoa vielä: ", virhelista['virhekoodi'])
+                
+                mergedicts(virhelista,students, path2)
+                
+                print("Toinen merge: ", students)
+           
+
           
         if event == 'WRITE':
             with open("Arvostellut.json", "w") as outfile:
