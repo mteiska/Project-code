@@ -185,28 +185,45 @@ def main():
                 print(virhelista[values['virhe']])
             else:
                 virheen_lukumaara = 1
-                print(values['virhe'])
+                
                 virhelista[values['virhe']] = virheen_lukumaara
                 print(virhelista[values['virhe']])
-        print(event, "Values are these after this:", values)
+        
         ### Adding to problem counter ###
         if event == '+' or event == '-':
             if event=='+':
-                if values['-TREE-'][0] in virhelista.keys():
-                    virhelista[values['-TREE-'][0]] = virhelista[values['-TREE-'][0]] + 1
-                else:
-                    virheen_lukumaara = 1
-                    virhelista[values['-TREE-'][0]] = virheen_lukumaara
+                try:
+                    if values['-TREE-'][0] in virhelista.keys():
+                        virhelista[values['-TREE-'][0]] = virhelista[values['-TREE-'][0]] + 1
+                    else:
+                        virheen_lukumaara = 1
+                        virhelista[values['-TREE-'][0]] = virheen_lukumaara
+                except IndexError:
+                    print("Listalla ei ole vielä opiskelijaa.")
+                    continue
+                window['-TREE-'].update(key = values['-TREE-'][0], value = virhelista[values['-TREE-'][0]])
           ### Decreasing problem counter ###      
             if event== '-':
-                if virhelista[values['-TREE-'][0]] >0:
-                    if values['-TREE-'][0] in virhelista.keys():
-                        virhelista[values['-TREE-'][0]] = virhelista[values['-TREE-'][0]] - 1
-                else:
-                    virheen_lukumaara = 1
-                    virhelista[values['-TREE-'][0]] = virheen_lukumaara
+                if students:
+                    for student in students:
+                        if values['-TREE-'][0] in students[student] and student == path2:
 
-            window['-TREE-'].update(key = values['-TREE-'][0], value = virhelista[values['-TREE-'][0]])
+                            if students[student][values['-TREE-'][0]] > 0:
+                                students[student][values['-TREE-'][0]] = students[student][values['-TREE-'][0]] - 1
+                                print("TÄÄ TULEE MIINUS STUDENTS",students[student],  students[student][values['-TREE-'][0]])
+                                window['-TREE-'].update(key = values['-TREE-'][0], value = students[student][values['-TREE-'][0]])
+                
+                if virhelista != {}:
+                    print("Nyt uus itieto")
+                    if virhelista[values['-TREE-'][0]] >0:
+                        if values['-TREE-'][0] in virhelista.keys():
+                            virhelista[values['-TREE-'][0]] = virhelista[values['-TREE-'][0]] - 1
+                    else:
+                        virheen_lukumaara = 1
+                        virhelista[values['-TREE-'][0]] = virheen_lukumaara
+
+                    window['-TREE-'].update(key = values['-TREE-'][0], value = virhelista[values['-TREE-'][0]])
+                
         ### WIP: Counting mistakepoints right, taking account different constraints
        
         if  event == 'Laske virhepisteet':
@@ -231,10 +248,10 @@ def main():
         ### If row selected and to dict ###
         if event == '-PROGRAMS-':
             virhekoodi.clear()
-
-            key = key_define(tree)
+       
+            k = key_define(tree)
             
-            node = studentdata.tree_dict[key]
+            node = studentdata.tree_dict[k]
             parent_node = studentdata.tree_dict[node.parent]
             if node.parent == '':
                 continue
@@ -243,6 +260,37 @@ def main():
             if(values['-PROGRAMS-'][0]!= node.parent):
                 path2 = values['-PROGRAMS-'][0].split('/')
                 path2 = path2[len(path2)-2]
+            #WIP: Testing for tree update
+                
+                    #Update values since they exist already
+                for student in students:
+                    print("Opsikelija on" ,student)
+                    if student == path2:
+                        for key in treedata.tree_dict:
+                            node =  treedata.tree_dict[key]
+                            if key not in students[student] and node.children == []:
+                                print("JOS EI KÄYTÄVÄ OPISKELIJA: ", students[student])
+                                node =  treedata.tree_dict[key]
+                                node.values = 0
+                                print("JOS EI KÄYTÄVÄ OPISKELIJA: ", students[student])
+                        for err in students[student]:
+                            
+                            if err in treedata.tree_dict:
+                                print(students[path2][err])
+                                node =  treedata.tree_dict[err]
+                                node.values = students[path2][err]
+                                print(students[path2][err])
+                                print("NODEN JOTA LÄPIKÄYDÄÄ if ARVOT OVAT:",node.text, node.values)
+                     
+                            # elif node.values == 0:
+                            #     print(node.text)
+                            #     node.values = 0
+                            
+                           
+                            
+                window['-TREE-'].update(values = treedata)
+                
+         
                 if not students:
                     students[path2] = []
                 if path2 not in students:
@@ -257,12 +305,12 @@ def main():
                 
         ### Save added rows to other tree structure ###
         if event == 'SAVE':
-            print("Paluuarvot programsista on : ", values['-PROGRAMS-'][0])
             
          
             paluuarvo = update_tree_data(students)
             window['-READY-'].update(values=paluuarvo)
-            mergedicts(virhelista,students, path2)
+            if virhelista != {}:
+                mergedicts(virhelista,students, path2)
             
 
             if 'virhekoodi' in students[path2] :
@@ -273,9 +321,10 @@ def main():
 
             else:
                 virhekoodi.append(values['virheteksti'])
-                virhelista['virhekoodi'] = virhekoodi.copy() #Adding copy of a list so program does not override existing value
+                virhelista['virhekoodi'] = virhekoodi.copy() #Adding copy of a list so program does not override existing value due referencing
                 print("Tämä tulee kun ei ole annettu arvoa vielä: ", virhelista['virhekoodi'])
-                
+                print("Ennen mergeä: ", virhelista)
+                print("Ennen mergeä: ", students)
                 mergedicts(virhelista,students, path2)
                 
                 print("Toinen merge: ", students)
