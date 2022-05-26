@@ -1,0 +1,37 @@
+{
+    "Ahonen_Kasimir": {
+        "PO0500": 1,
+        "TV0603": 1,
+        "virhekoodi": [
+            "return keskiarvo, eniten, vahiten"
+        ]
+    },
+    "Ahti_Eveliina": {
+        "TR0202": 1,
+        "TR0203": 2,
+        "PK0909": 1,
+        "PK0900": 1,
+        "PK0901": 2,
+        "TV0604": 1,
+        "virhekoodi": [
+            "def luku(lista):\n    import sys\n    nimi=input(\"Anna luettavan tiedoston nimi: \")\n    try:"
+        ]
+    },
+    "Ahti_Iiro": {
+        "TK0704": 1,
+        "PK0913": 1,
+        "virhekoodi": [
+            "sys.exit()",
+            ""
+        ]
+    },
+    "Annala_Niklas": {
+        "PK0906": 1,
+        "PK0907": 1,
+        "PK0909": 1,
+        "PK0908": 1,
+        "virhekoodi": [
+            " try:\n        tdsto=open(tiedosto, \"r\")\n    except Exception:\n        print(\"Tiedoston \", tiedosto, \" k\u00e4sittelyss\u00e4 virhe, lopetetaan.\", sep=\"'\")\n        sys.exit(0)\n    lista.clear()\n    rivinm=0\n    tdsto.readline()\n    while True:\n        lue=tdsto.readline()\n        if(len(lue)==0):\n            print(\"Tiedostosta '\"+tiedosto+\"' luettiin listaan\", rivinm, \"datarivin tiedot.\")\n            print()\n            break"
+        ]
+    }
+}
