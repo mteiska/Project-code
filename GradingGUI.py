@@ -331,19 +331,7 @@ def main():
         #{Opiskelija: {virhekoodi1: lkm1}, Opiskelija2: {Virhekoodi2: lkm2, virhekoodi3 : lkm3}}
 
 main()
-
-        
-        
-          
-       
-
-  
-      
-
  
-        
-          
-       
 
   
       
