@@ -43,38 +43,25 @@ if not starting_path:
     sys.exit(0)
 
 ### Create Tree Structure for problems ###
-
 studentdata = sg.TreeData()
-
+###Create menu for MenuBar ### 
+menu_def = [['Toiminto',['Export opiskelijadata']]]
             ### Layout for GUI ####
-layout = [[sg.Text('Opiskelijat')],
+layout = [[sg.MenuBar(menu_def),sg.Text('Opiskelijat')],
          [sg.Tree(data=studentdata,
                    headings=[],
                    auto_size_columns=True,
                    select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
                    num_rows=7,
-                   col0_width=8,
+                   col0_width=50,
                    key='-PROGRAMS-',
                    show_expanded=False,
                    pad = (2,2),
                    enable_events=True,
-                   expand_x=True,
+                   expand_x=False,
                    expand_y=True,
                    row_height=30
                    
-                   ),
-        sg.Tree(data=studentdata,
-                   headings=[],
-                   auto_size_columns=True,
-                   select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
-                   num_rows=15,
-                   col0_width=7,
-                   key='-READY-',
-                   show_expanded=False,
-                   pad = (2,2),
-                   enable_events=True,
-                   expand_x=True,
-                   expand_y=True,
                    )
                    ],
 
@@ -84,7 +71,7 @@ layout = [[sg.Text('Opiskelijat')],
                    headings=['lkm' ],
                    auto_size_columns=True,
                    select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
-                   num_rows=12,
+                   num_rows=25,
                   
                    col0_heading = 'Ongelmat koodissa                    ',
                    col0_width = 55,
@@ -97,7 +84,7 @@ layout = [[sg.Text('Opiskelijat')],
                    ),sg.Button('+',key='+'),sg.Button('-',key='-'), sg.Button('Ei yhtään oikein', key = 'ALL'), sg.Multiline(key = 'virheteksti', size = (20,10)), ],
                    
    
-        [sg.Text('Opiskelijapalaute'), sg.Text('Tarkastaja'), sg.Push(), sg.Text('Arvioitavat tiedostot')], 
+        [sg.Text('Opiskelijapalaute'), sg.Text('Tarkastaja')], 
         [sg.InputCombo(('Harjoitustyön Palautus 1', 'Harjoitustyön Palautus 2', 'Korjaus Palautus'), size=(20, 1)), 
             sg.InputCombo(('Mika/TA', 'Joku/TA'), size=(15, 1))],      
         [sg.Button('Laske virhepisteet'), sg.Button('Tallenna', key = 'SAVE'), 
@@ -113,12 +100,12 @@ def add_files_in_folder(parent, dirname):
             add_files_in_folder(fullname, fullname)
         else:
             studentdata.Insert(parent, fullname, f, values=[0], icon = check[0])
-### Updating already reviewed programs list ####           
-def update_tree_data(students):
-    ready_studentdata = sg.TreeData()
-    for id in students:
-        ready_studentdata.Insert('',id,id,values=[])
-    return ready_studentdata
+### Updating already reviewed programs list since not needed commented ####           
+# def update_tree_data(students):
+#     ready_studentdata = sg.TreeData()
+#     for id in students:
+#         ready_studentdata.Insert('',id,id,values=[])
+#     return ready_studentdata
 
 ### Nice to have function for finding selected elements key ###
 def key_define(tree):
@@ -158,7 +145,18 @@ check = [icon(0), icon(1), icon(2)] # Three states Ready, In Progress, Unchecked
 
 def mergedicts(dict1, dict2, student):
     dict2[student] = dict(dict1)
-    
+
+def read_json_update_students(students):
+    try:
+        if(os.path.isfile('Arvostellut.json')):
+            f = open('Arvostellut.json', encoding = 'utf-8')
+            arvostellut = json.load(f)
+            students = arvostellut
+            print("STUDENTS LISTA OHJELMAN ALUKSI ON NYT: ", students)
+    except Exception:
+        print("File open failed.")
+        pass
+    return students
 def main():
     virhelista = {}
     virheen_lukumaara = 0   
@@ -167,6 +165,7 @@ def main():
     virhekoodi = []
     add_files_in_folder('', starting_path)
     list = initiate_problem_list()
+    students = read_json_update_students(students)
     window = sg.Window('Grading tool', layout, resizable=True,font = font, finalize = True)
     
     tree = window['-PROGRAMS-']         # type: sg.Tree
@@ -263,7 +262,6 @@ def main():
             if(values['-PROGRAMS-'][0]!= node.parent):
                 path2 = values['-PROGRAMS-'][0].split('/')
                 path2 = path2[len(path2)-2]
-            #WIP: Testing for tree update
                 
                     #Update values since they exist already
                 for student in students:
@@ -272,10 +270,8 @@ def main():
                         for key in treedata.tree_dict:
                             node =  treedata.tree_dict[key]
                             if key not in students[student] and node.children == []:
-                                print("JOS EI KÄYTÄVÄ OPISKELIJA: ", students[student])
                                 node =  treedata.tree_dict[key]
                                 node.values = 0
-                                print("JOS EI KÄYTÄVÄ OPISKELIJA: ", students[student])
                         for err in students[student]:
                             if err in treedata.tree_dict:
                                 print(students[path2][err])
@@ -301,31 +297,38 @@ def main():
         ### Save added rows to other tree structure ###
         if event == 'SAVE':
             
-            paluuarvo = update_tree_data(students)
-            window['-READY-'].update(values=paluuarvo)
             if virhelista != {} and path2 not in students:
                 mergedicts(virhelista,students, path2)
                 print(students)   
 
             if 'virhekoodi' in students[path2] :
                 print("Tämä tulee kun virhekoodia on annettu ",students)
-                students[path2]['virhekoodi'].append(values['virheteksti'])
-                print(students)
+                if values['virheteksti'] != '':
+                    students[path2]['virhekoodi'].append(values['virheteksti'])
+                    print(students)
+                mergedicts(virhelista,students, path2)
                
             else:
-                virhekoodi.append(values['virheteksti'])
-                virhelista['virhekoodi'] = virhekoodi.copy() #Adding copy of a list so program does not override existing value due referencing
-                print("Tämä tulee kun ei ole annettu arvoa vielä: ", virhelista['virhekoodi'])
-                print("Ennen mergeä: ", virhelista)
-                print("Ennen mergeä: ", students)
-                mergedicts(virhelista,students, path2)
+                if values['virheteksti'] != '':
+                    virhekoodi.append(values['virheteksti'])
+                    virhelista['virhekoodi'] = virhekoodi.copy() #Adding copy of a list so program does not override existing value due referencing
+                    print("Tämä tulee kun ei ole annettu arvoa vielä: ", virhelista['virhekoodi'])
+                    mergedicts(virhelista,students, path2)
+                    
+                else:   
+                    print("Ennen mergeä: ", virhelista)
+                    print("Ennen mergeä: ", students)
+                    mergedicts(virhelista,students, path2)
                 
                 print("Toinen merge: ", students)
             window['virheteksti'].update(value = '')
            
         if event == 'WRITE':
-            with open("Arvostellut.json", "w") as outfile:
-                json.dump(students, outfile, indent=4)
+            try:
+                with open("Arvostellut.json", "w", encoding = 'utf-8') as outfile:
+                    json.dump(students, outfile, indent=4)
+            except Exception as e:
+                print("File opening failed with error code:",e)
            
         # Example dict structure after nesting #
         #{Opiskelija: {virhekoodi1: lkm1}, Opiskelija2: {Virhekoodi2: lkm2, virhekoodi3 : lkm3}}
