@@ -224,10 +224,7 @@ def main():
                                 print("TÄÄ TULEE MIINUS STUDENTS",students[student],  students[student][values['-TREE-'][0]])
                                 window['-TREE-'].update(key = values['-TREE-'][0], value = students[student][values['-TREE-'][0]])
                 
-                if virhelista[values['-TREE-'][0]]:
-                    print("Nyt uusi tieto")
-                    print("KATSOTAAN MIKS KEYERROR" , virhelista)
-
+                if values['-TREE-'][0] in virhelista:
                     if virhelista[values['-TREE-'][0]] >0:
                         if values['-TREE-'][0] in virhelista.keys():
                             virhelista[values['-TREE-'][0]] = virhelista[values['-TREE-'][0]] - 1
@@ -272,7 +269,6 @@ def main():
                 
                     #Update values since they exist already
                 for student in students:
-                    print("Opiskelija on" ,student)
                     if student == path2:
                         for key in treedata.tree_dict:
                             node =  treedata.tree_dict[key]
@@ -311,8 +307,7 @@ def main():
             elif 'virhekoodi' in students[path2] :
                 print("Tämä tulee kun virhekoodia on annettu ",students)
                 if values['virheteksti'] != '':
-                    students[path2]['virhekoodi'].append(values['virheteksti'])
-                print("ENNEN MERGEÄ JOKA PYYHKII ", students , "VIRHELISTA ON, ", virhelista)    
+                    students[path2]['virhekoodi'].append(values['virheteksti']) 
                 #Jostai syystä mergedicts ylikirjoittaa vanhan valuen eikä vain lisää perään   
                 mergedicts(virhelista,students, path2)
                 print("JOS VIRHEDKOODI IN STUDENTS: ", students)
