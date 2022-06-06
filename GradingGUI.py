@@ -71,12 +71,12 @@ layout = [[sg.MenuBar(menu_def),sg.Text('Opiskelijat')],
                    headings=['lkm' ],
                    auto_size_columns=True,
                    select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
-                   num_rows=25,
-                  
+                   num_rows=15,
+                
                    col0_heading = 'Ongelmat koodissa                    ',
                    col0_width = 55,
                    key='-TREE-',
-                   show_expanded=True,
+                   show_expanded=False,
                    pad = (2,2),
                    enable_events=True,
                    expand_x=True,
@@ -144,8 +144,13 @@ check = [icon(0), icon(1), icon(2)] # Three states Ready, In Progress, Unchecked
 ### Protyping for error score calculating ###
 
 def mergedicts(dict1, dict2, student):
-    dict2[student] = dict(dict1)
+    if dict2[student] != []:
+        print("TULEE MERGEN SISÄSLTÄ", dict2[student])
+        dict2[student].update(dict1)
 
+    elif dict1 != {}:
+        dict2[student] = dict(dict1)
+   
 def read_json_update_students(students):
     try:
         if(os.path.isfile('Arvostellut.json')):
@@ -219,13 +224,15 @@ def main():
                                 print("TÄÄ TULEE MIINUS STUDENTS",students[student],  students[student][values['-TREE-'][0]])
                                 window['-TREE-'].update(key = values['-TREE-'][0], value = students[student][values['-TREE-'][0]])
                 
-                if virhelista != {}:
+                if virhelista[values['-TREE-'][0]]:
                     print("Nyt uusi tieto")
+                    print("KATSOTAAN MIKS KEYERROR" , virhelista)
+
                     if virhelista[values['-TREE-'][0]] >0:
                         if values['-TREE-'][0] in virhelista.keys():
                             virhelista[values['-TREE-'][0]] = virhelista[values['-TREE-'][0]] - 1
                     else:
-                        virheen_lukumaara = 1
+                        virheen_lukumaara = 0
                         virhelista[values['-TREE-'][0]] = virheen_lukumaara
                     window['-TREE-'].update(key = values['-TREE-'][0], value = virhelista[values['-TREE-'][0]])
                 
@@ -301,12 +308,14 @@ def main():
                 mergedicts(virhelista,students, path2)
                 print(students)   
 
-            if 'virhekoodi' in students[path2] :
+            elif 'virhekoodi' in students[path2] :
                 print("Tämä tulee kun virhekoodia on annettu ",students)
                 if values['virheteksti'] != '':
                     students[path2]['virhekoodi'].append(values['virheteksti'])
-                    print(students)
+                print("ENNEN MERGEÄ JOKA PYYHKII ", students , "VIRHELISTA ON, ", virhelista)    
+                #Jostai syystä mergedicts ylikirjoittaa vanhan valuen eikä vain lisää perään   
                 mergedicts(virhelista,students, path2)
+                print("JOS VIRHEDKOODI IN STUDENTS: ", students)
                
             else:
                 if values['virheteksti'] != '':
@@ -314,11 +323,13 @@ def main():
                     virhelista['virhekoodi'] = virhekoodi.copy() #Adding copy of a list so program does not override existing value due referencing
                     print("Tämä tulee kun ei ole annettu arvoa vielä: ", virhelista['virhekoodi'])
                     mergedicts(virhelista,students, path2)
+                    print(students)
                     
                 else:   
                     print("Ennen mergeä: ", virhelista)
                     print("Ennen mergeä: ", students)
                     mergedicts(virhelista,students, path2)
+                    print(students)
                 
                 print("Toinen merge: ", students)
             window['virheteksti'].update(value = '')
