@@ -49,9 +49,9 @@ if not starting_path:
 ### Create Tree Structure for problems ###
 studentdata = sg.TreeData()
 ###Create menu for MenuBar ### 
-menu_def = [['Toiminto',['Export opiskelijadata']]]
+menu_def = [['Toiminto',['Export opiskelijadata', 'Laske virhepisteet']]]
             ### Layout for GUI ####
-layout = [[sg.MenuBar(menu_def),sg.Text('Opiskelijat')],
+layout = [[sg.MenuBar(menu_def, tearoff=False),sg.Text('Opiskelijat')],
          [sg.Tree(data=studentdata,
                    headings=[],
                    auto_size_columns=True,
@@ -91,7 +91,7 @@ layout = [[sg.MenuBar(menu_def),sg.Text('Opiskelijat')],
         [sg.Text('Opiskelijapalaute'), sg.Text('Tarkastaja')], 
         [sg.InputCombo(('Harjoitustyön Palautus 1', 'Harjoitustyön Palautus 2', 'Korjaus Palautus'), size=(20, 1)), 
             sg.InputCombo(('Mika/TA', 'Joku/TA'), size=(15, 1))],      
-        [sg.Button('Laske virhepisteet'), sg.Button('Tallenna', key = 'SAVE'), 
+        [sg.Button('Tallenna', key = 'SAVE'), 
         sg.Button('Kirjoita arvostellut työt tiedostoon', key='WRITE'), sg.Button('Exit')]  ]  
 #################################################################################################
 
@@ -166,6 +166,7 @@ def read_json_update_students(students):
         print("File open failed.")
         pass
     return students
+
 def main():
     virhelista = {}
     virheen_lukumaara = 0   
@@ -181,7 +182,6 @@ def main():
     tree.bind("<Double-1>", '+DOUBLE')  
     while True:
         event, values = window.read()
-       
         if event == 'Exit' or event == sg.WIN_CLOSED:
             break
         if event == 'virhe':
@@ -189,8 +189,7 @@ def main():
                 virhelista[values['virhe']] = virhelista[values['virhe']] + 1
                 print(virhelista[values['virhe']])
             else:
-                virheen_lukumaara = 1
-                
+                virheen_lukumaara = 1  
                 virhelista[values['virhe']] = virheen_lukumaara
                 print(virhelista[values['virhe']])
         
@@ -243,7 +242,6 @@ def main():
             alternative_added = False
             for virhe in list:
                
-               
                 if virhe.virhe in virhelista.keys():
                     print("Listalla virheiden lukumäärä: ", virhe.lukumaara, "Virheen vakavuus: ", virhe.vakavuus)
                     print(virhelista[values['-TREE-'][0]])
@@ -258,15 +256,17 @@ def main():
                                         virhepisteet = virhepisteet + alternative.vakavuus[lukumaara]
                                         alternative_added = True
                                         print("ALTERNATIVE VIRHEPISTEET: ", virhepisteet)
-                                    #WIP: LOGIIKASSA SAATAA OLLA HÄIKKÄÄ I DONT SEE IT
+                                    
                                     elif max_original_points > max_new_points:
                                         virhepisteet = virhepisteet + max_original_points
                                         print("Alkuperäset isommat VIRHEPISTEET: ", virhepisteet)
                                     #Also fine if mistake points are the same
+                                    elif virhelista[virhe.virhe]==-1:
+                                        continue
                                     else:
                                         virhepisteet = virhepisteet + max_new_points
                                         print("Uudet siommat/ sama isommat VIRHEPISTEET: ", virhepisteet)
-                    #EI TOIMI MIETI UUDELLEEN
+                    
                     for i in virhe.lukumaara:
                         if i == 'All' and virhelista[virhe.virhe]==-1:
                             virhepisteet = virhepisteet + int(virhe.vakavuus[i])
@@ -277,10 +277,14 @@ def main():
                             isoin = i
                             print("NYT i on pienmpi kuin virhelistan value", isoin)
                     print(i)
-                    print(isoin)
+                    
                     if virhelista[virhe.virhe]!=-1 and alternative_added == False:
+                        print("Virheen pisteet ovat :",round(virhepisteet,1))
                         virhepisteet = virhepisteet + float(virhe.vakavuus[str(isoin)])
                     print("Virheen pisteet ovat :",round(virhepisteet,1))
+                    alternative_added = False
+            #Lets clear the variable for new mistake points 
+            virhepisteet = 0
       
        ### All occurances are wrong ###
         if event == 'ALL':
@@ -340,7 +344,7 @@ def main():
                     print("Tämä tulee kun virhekoodia on annettu ",students)
                     if values['virheteksti'] != '':
                         students[path2]['virhekoodi'].append(values['virheteksti']) 
-                    #Jostai syystä mergedicts ylikirjoittaa vanhan valuen eikä vain lisää perään   
+                      
                     mergedicts(virhelista,students, path2)
                     print("JOS VIRHEDKOODI IN STUDENTS: ", students)
                 
@@ -364,6 +368,60 @@ def main():
                 sg.popup_ok('Valitse opiskelija ja yritä uudelleen')
                 print("Valitse opiskelija ja yritä uudelleen")
                 pass
+    #####################Counting mistake points ##############################
+            alternative_added = False
+            for virhe in list:
+    
+                if virhe.virhe in virhelista.keys():
+                    print("Listalla virheiden lukumäärä: ", virhe.lukumaara, "Virheen vakavuus: ", virhe.vakavuus)
+                    print(virhelista[values['-TREE-'][0]])
+                    if virhe.alternative:
+                        for j in virhe.alternative:
+                            for alternative in list:
+                                if j == alternative.virhe:
+                                    lukumaara = str(virhelista[virhe.virhe] )
+                                    max_original_points = max(virhe.vakavuus.values())
+                                    max_new_points = max(alternative.vakavuus.values())
+                                    if lukumaara in alternative.vakavuus:
+                                        virhepisteet = virhepisteet + alternative.vakavuus[lukumaara]
+                                        alternative_added = True
+                                        print("ALTERNATIVE VIRHEPISTEET: ", virhepisteet)
+                                    #WIP: LOGIIKASSA SAATAA OLLA HÄIKKÄÄ I DONT SEE IT
+                                    elif max_original_points > max_new_points:
+                                        virhepisteet = virhepisteet + max_original_points
+                                        print("Alkuperäset isommat VIRHEPISTEET: ", virhepisteet)
+                                    #Also fine if mistake points are the same
+                                    elif virhelista[virhe.virhe]==-1:
+                                        continue
+                                    else:
+                                        virhepisteet = virhepisteet + max_new_points
+                                        print("Uudet siommat/ sama isommat VIRHEPISTEET: ", virhepisteet)
+                    #EI TOIMI MIETI UUDELLEEN
+                    for i in virhe.lukumaara:
+                        if i == 'All' and virhelista[virhe.virhe]==-1:
+                            virhepisteet = virhepisteet + int(virhe.vakavuus[i])
+                            break
+                        elif i == 'All' or i == 'virhekoodi':
+                            continue
+                        if int(i) <= virhelista[virhe.virhe]:
+                            isoin = i
+                            print("NYT i on pienmpi kuin virhelistan value", isoin)
+                    print(i)
+                    
+                    if virhelista[virhe.virhe]!=-1 and alternative_added == False:
+                        print("Virheen pisteet ovat :",round(virhepisteet,1))
+                        virhepisteet = virhepisteet + float(virhe.vakavuus[str(isoin)])
+                    print("Virheen pisteet ovat :",round(virhepisteet,1))
+                    alternative_added = False
+            virhelista['virhepisteet'] = virhepisteet
+            try:
+                mergedicts(virhelista, students, path2)
+                print("Virhepisteiden laskun jälkeen STudents ja virhelista" ,students, virhelista)
+            except UnboundLocalError:
+                print('Valitse Opiskelija ensin.')
+            #Lets clear the variable for new mistake points 
+            virhepisteet = 0
+            #WIP: Already added mistakes not counted towards mistake points
             
         if event == 'WRITE':
             try:
