@@ -1,5 +1,6 @@
 from lib2to3.pytree import Node
-from tkinter import Scrollbar
+from multiprocessing.sharedctypes import Value
+from tkinter import E, Scrollbar
 import PySimpleGUI as sg # Not default library
 import os
 import sys
@@ -66,7 +67,8 @@ treecol = [[sg.Tree(data=studentdata,
                    expand_y=True,
                    row_height=30
                    
-                   ), sg.Multiline(key = 'virheteksti', autoscroll = True, size = (25,10))
+                   ), sg.Multiline(key = 'virheteksti', autoscroll = True, size = (25,10)), 
+                   sg.Multiline(key = "-ERROROUT-",autoscroll = True, size = (25,10))
                    ],[sg.Tree(data=treedata,
                    headings=['lkm' ],
                    auto_size_columns=True,
@@ -92,7 +94,8 @@ buttoncol = [
                 [sg.Text('Virhepisteet ovat:'), sg.Txt(key = '-virheout-', text = 0)] 
                 ]
             ### Layout for GUI ####
-layout = [[sg.MenuBar(menu_def, tearoff=False),sg.Text('Opiskelijat'),  sg.Text("        " *13), sg.Text('Laita virheen koodi tähän.')],
+layout = [[sg.MenuBar(menu_def, tearoff=False),sg.Text('Opiskelijat'),  sg.Text("        " *13), 
+sg.Text('Laita virheen koodi alle.'), sg.pin(sg.Button("<-",  enable_events = True, key = "-LEFT-")), sg.Button("->", enable_events = True, key = "-RIGHT-")],
             [sg.Column(treecol, expand_y = True), sg.Column(buttoncol)],
             [sg.Text('Opiskelijapalaute'), sg.Text("      " *2), sg.Text('Tarkastaja')],
         [sg.InputCombo(('Harjoitustyön Palautus 1', 'Harjoitustyön Palautus 2', 'Korjaus Palautus'), size=(20, 1)), 
@@ -177,6 +180,7 @@ def main():
     virheen_lukumaara = 0   
     students = {} 
     virhepisteet = 0
+    index = 0
     virhekoodi = []
     add_files_in_folder('', starting_path)
     list = initiate_problem_list()
@@ -326,6 +330,16 @@ def main():
                      
                 window['-TREE-'].update(values = treedata)
                 
+                if path2 in students:
+                    if 'virhekoodi' in students[path2]:
+                        window['-ERROROUT-'].update(students[path2]['virhekoodi'][0])
+                        window['-LEFT-'].update(visible = False)
+                        index = 0
+
+                    else:
+                        window['-ERROROUT-'].update("Syötä opiskelijalle virhekoodia, jolloin se näkyy tässä.")
+                        window['-RIGHT-'].update(visible=True)
+                    
                 if not students:
                     students[path2] = []
                 if path2 not in students:
@@ -435,7 +449,34 @@ def main():
             virhepisteet = 0
         
             #WIP: Already added mistakes not counted towards mistake points
+        if event == '-RIGHT-':
+
+                index = index + 1
+                try:
+                    if 'virhekoodi' in students[path2]:
+                        window['-ERROROUT-'].update(students[path2]['virhekoodi'][index])
+                        window['-LEFT-'].update(visible=True)
+                        
+
+                except IndexError:
+                    print("List end add more error code.")
+                    index = index -1 
+                    print(index)
+                    window['-RIGHT-'].update(visible=False)
+                    pass
+
+
+                
+        if event == '-LEFT-':
+            print(values['-ERROROUT-'])
+            if 'virhekoodi' in students[path2]:
+                if values['-ERROROUT-'] != students[path2]['virhekoodi'][0]:
+                    index = index - 1
+                    window['-ERROROUT-'].update(students[path2]['virhekoodi'][index])
+                    window['-RIGHT-'].update(visible = True)
             
+                
+               
         if event == 'WRITE':
             try:
                 with open("Arvostellut.json", "w", encoding = 'utf-8') as outfile:
