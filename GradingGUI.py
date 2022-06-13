@@ -396,7 +396,9 @@ def main():
         
                     if virhe.virhe in students[path2].keys():
                         print("Listalla virheiden lukumäärä: ", virhe.lukumaara, "Virheen vakavuus: ", virhe.vakavuus)
-                        
+                        if students[path2][virhe.virhe] == 0:
+                            del students[path2][virhe.virhe]
+                            continue
                         if virhe.alternative:
                             for j in virhe.alternative:
                                 for alternative in list:
@@ -429,7 +431,7 @@ def main():
                                 print("NYT i on pienmpi kuin virhelistan value", isoin)
                         
                         
-                        if students[path2][virhe.virhe]!=-1 and alternative_added == False:
+                        if students[path2][virhe.virhe]!=-1 and alternative_added == False and students[path2][virhe.virhe]!=0:
                             virhepisteet = virhepisteet + float(virhe.vakavuus[str(isoin)])
                         print("Virheen pisteet ovat :",round(virhepisteet,1))
                         alternative_added = False
