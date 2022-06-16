@@ -315,6 +315,8 @@ def main():
                     #Update values since they exist already
                 for student in students:
                     if student == path2:
+                    #Update mistakepoints on click
+                        window['-virheout-'].update(students[path2]['virhepisteet'])
                         for key in treedata.tree_dict:
                             node =  treedata.tree_dict[key]
                             if key not in students[student] and node.children == []:
@@ -360,8 +362,6 @@ def main():
                 for virhe in list:
             
                     if virhe.virhe in students[path2].keys():
-                        print("Listalla virheiden lukumäärä: ", virhe.lukumaara, "Virheen vakavuus: ", virhe.vakavuus)
-                            
                         if students[path2][virhe.virhe] == 0:
                             del students[path2][virhe.virhe]
                             continue     
@@ -369,18 +369,12 @@ def main():
                         parent_node = treedata.tree_dict[node.parent]
 
                         if parent_node.parent == '':
-                            print("Enenen checkkiä kategoria on: ", kategoria)
-                            print(parent_node.text)
-                            print(kokonaissumma)
                             if kategoria != parent_node.text and kategoria != '':
-                                print("KATEGORIA ON", kategoria, parent_node.text)
                                 window['-TREE-'].update(key = kategoria, value = kokonaissumma)
                                 kokonaissumma = 0
                             
                             kategoria = parent_node.text
-
                             kokonaissumma = kokonaissumma + abs(students[path2][virhe.virhe])
-                            print("kokonaissumma VALUES ON TÄSSÄ VAIHEESSA OHJELMAA: ",kokonaissumma)
                 window['-TREE-'].update(key = kategoria, value = kokonaissumma)
 
 ###Adding checkboxes next to student names for easier marking ###
@@ -405,14 +399,12 @@ def main():
                 else:
                     if values['virheteksti'] != '':
                         virhekoodi.append(values['virheteksti'])
-                        virhelista['virhekoodi'] = virhekoodi.copy() #Adding copy of a list so program does not override existing value due referencing
-                        print("Tämä tulee kun ei ole annettu arvoa vielä: ", virhelista['virhekoodi'])
+                    #Adding copy of a list so program does not override existing value due referencing
+                        virhelista['virhekoodi'] = virhekoodi.copy() 
                         mergedicts(virhelista,students, path2)
                         print(students)
                         
                     else:   
-                        print("Ennen mergeä: ", virhelista)
-                        print("Ennen mergeä: ", students)
                         mergedicts(virhelista,students, path2)
                         print(students)
                     
@@ -437,8 +429,6 @@ def main():
                 for virhe in list:
         
                     if virhe.virhe in students[path2].keys():
-                        print("Listalla virheiden lukumäärä: ", virhe.lukumaara, "Virheen vakavuus: ", virhe.vakavuus)
-                        
                         if students[path2][virhe.virhe] == 0:
                             del students[path2][virhe.virhe]
                             continue     
@@ -446,18 +436,13 @@ def main():
                         parent_node = treedata.tree_dict[node.parent]
 
                         if parent_node.parent == '':
-                            print("Enenen checkkiä kategoria on: ", kategoria)
-                            print(parent_node.text)
-                            print(kokonaissumma)
                             if kategoria != parent_node.text and kategoria != '':
                                 print("KATEGORIA ON", kategoria, parent_node.text)
                                 window['-TREE-'].update(key = kategoria, value = kokonaissumma)
                                 kokonaissumma = 0
                            
                             kategoria = parent_node.text
-
                             kokonaissumma = kokonaissumma + abs(students[path2][virhe.virhe])
-                            print("kokonaissumma VALUES ON TÄSSÄ VAIHEESSA OHJELMAA: ",kokonaissumma)
                             
                         if virhe.alternative:
                             for j in virhe.alternative:
@@ -469,17 +454,15 @@ def main():
                                         if lukumaara in alternative.vakavuus:
                                             virhepisteet = virhepisteet + alternative.vakavuus[lukumaara]
                                             alternative_added = True
-                                            print("ALTERNATIVE VIRHEPISTEET: ", virhepisteet)
+
                                         
                                         elif max_original_points > max_new_points:
                                             virhepisteet = virhepisteet + max_original_points
-                                            print("Alkuperäset isommat VIRHEPISTEET: ", virhepisteet)
                                         #Also fine if mistake points are the same
                                         elif students[path2][virhe.virhe]==-1:
                                             continue
                                         else:
                                             virhepisteet = virhepisteet + max_new_points
-                                            print("Uudet siommat/ sama isommat VIRHEPISTEET: ", virhepisteet)
                         
                         for i in virhe.lukumaara:
                             if i == 'All' and students[path2][virhe.virhe]==-1:
