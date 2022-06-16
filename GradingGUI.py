@@ -67,14 +67,15 @@ treecol = [[sg.Tree(data=studentdata,
                    expand_y=True,
                    row_height=30
                    
-                   ), sg.Multiline(key = 'virheteksti', autoscroll = True, size = (25,10)), 
-                   sg.Multiline(key = "-ERROROUT-",autoscroll = True, size = (25,10))
-                   ],[sg.Tree(data=treedata,
+                   ), 
+                   sg.Multiline(key = 'virheteksti', default_text = 'Syötä tähän virhekoodia.', autoscroll = True, size = (25,10)), 
+                   sg.Multiline(key = "-ERROROUT-",autoscroll = True, size = (25,10), tooltip = 'Syötetty koodi näkyy tässä laatikossa.')
+                   ],
+                   [sg.Tree(data=treedata,
                    headings=['lkm' ],
                    auto_size_columns=True,
                    select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
                    num_rows=15,
-                
                    col0_heading = 'Ongelmat koodissa                    ',
                    col0_width = 40,
                    key='-TREE-',
@@ -88,19 +89,20 @@ treecol = [[sg.Tree(data=studentdata,
         sg.Button('Kirjoita arvostellut työt tiedostoon', key='WRITE'), sg.Button('Exit')]]
 
 buttoncol = [
-               
                 [sg.Button('+',key='+'),sg.Button('-',key='-'),], 
                 [sg.Button('Ei yhtään oikein', key = 'ALL')],
                 [sg.Text('Virhepisteet ovat:'), sg.Txt(key = '-virheout-', text = 0)] 
                 ]
+                
             ### Layout for GUI ####
 layout = [[sg.MenuBar(menu_def, tearoff=False),sg.Text('Opiskelijat'),  sg.Text("        " *12), 
-sg.Text('Laita virheen koodi alle.'),sg.Text('     '*2), sg.pin(sg.Button("<-",  enable_events = True, key = "-LEFT-"))
-,sg.Text('       '*5), sg.Button("->", enable_events = True, key = "-RIGHT-")],
-            [sg.Column(treecol, expand_y = True), sg.Column(buttoncol)],
-            [sg.Text('Opiskelijapalaute'), sg.Text("      " *2), sg.Text('Tarkastaja')],
+        sg.Text('Laita virheen koodi alle.'),sg.Text('     '*2), 
+        sg.pin(sg.Button("<-",  enable_events = True, key = "-LEFT-")) ,sg.Text('       '*5),
+        sg.Button("->", enable_events = True, key = "-RIGHT-")],
+        [sg.Column(treecol, expand_y = True), sg.Column(buttoncol)],
+        [sg.Text('Opiskelijapalaute'), sg.Text("      " *2), sg.Text('Tarkastaja')],
         [sg.InputCombo(('Harjoitustyön Palautus 1', 'Harjoitustyön Palautus 2', 'Korjaus Palautus'), size=(20, 1)), 
-            sg.InputCombo(('Mika/TA', 'Joku/TA'), size=(15, 1))],      
+        sg.InputCombo(('Mika/TA', 'Joku/TA'), size=(15, 1))],      
         ]  
 #################################################################################################
 
@@ -131,7 +133,7 @@ def double_click(tree):
     print("AVAIN ON SEURAAVA DOUBLE CLICKISTÄ" ,key)
     print(studentdata.tree_dict[key].values[-1])
     index = studentdata.tree_dict[key].values[0]
-    index = (index + 1) % 3
+    index = (index + 1) % 2
     studentdata.tree_dict[key].values[-1] = index
     tree.update(key=key, icon=check[index])
 
@@ -145,15 +147,13 @@ def icon(check):
     draw.rectangle(rectangle, outline='black', width=3)
     if check == 1:
         draw.line(line, fill='black', width=3, joint='curve')
-    elif check == 2:
-        draw.line(line, fill='grey', width=3, joint='curve')
     with BytesIO() as output:
         im.save(output, format="PNG")
         png = output.getvalue()
     return png
 
-check = [icon(0), icon(1), icon(2)] # Three states Ready, In Progress, Unchecked
-#WIP: Usability of In Progress state 
+check = [icon(0), icon(1)] # Two states Ready, Unchecked
+
 
 
 def mergedicts(dict1, dict2, student):
@@ -251,8 +251,7 @@ def main():
        ### List has alternatives now check if exist in virhelista and take biggest
         if  event == 'Laske virhepisteet':
             alternative_added = False
-            for virhe in list:
-               
+            for virhe in list:    
                 if virhe.virhe in virhelista.keys():
                     if virhe.alternative:
                         for j in virhe.alternative:
@@ -293,15 +292,16 @@ def main():
             #Lets clear the variable for new mistake points 
             virhepisteet = 0
       
-       ### All occurances are wrong ###
+       ### If all occurances are wrong ###
         if event == 'ALL':
             window['-TREE-'].update(key = values['-TREE-'][0], value = -1)
             virhelista[values['-TREE-'][0]] = -1 ## -1 is easy repsesentation for all being wrong
-        ### If row selected and to dict ###
+        ### If row is selected change student that is updated ###
         
         if event == '-PROGRAMS-':
             virhekoodi.clear()
             kokonaissumma = 0
+            window['virheteksti'].update(value = '')
             k = key_define(tree)      
             node = studentdata.tree_dict[k]
             parent_node = studentdata.tree_dict[node.parent]
@@ -311,12 +311,15 @@ def main():
             if(values['-PROGRAMS-'][0]!= node.parent):
                 path2 = values['-PROGRAMS-'][0].split('/')
                 path2 = path2[len(path2)-2]
-                
-                    #Update values since they exist already
+                #Update values since they exist already#
                 for student in students:
                     if student == path2:
                     #Update mistakepoints on click
-                        window['-virheout-'].update(students[path2]['virhepisteet'])
+                        if 'virhepisteet' in students[path2]:
+                            window['-virheout-'].update(students[path2]['virhepisteet'])
+                        else:
+                            window['-virheout-'].update(0)
+
                         for key in treedata.tree_dict:
                             node =  treedata.tree_dict[key]
                             if key not in students[student] and node.children == []:
@@ -336,11 +339,12 @@ def main():
                     if 'virhekoodi' in students[path2]:
                         window['-ERROROUT-'].update(students[path2]['virhekoodi'][0])
                         window['-LEFT-'].update(visible = False)
+                        window['-RIGHT-'].update(visible = True)
                         index = 0
 
                     else:
-                        window['-ERROROUT-'].update("Syötä opiskelijalle virhekoodia, jolloin se näkyy tässä.")
                         window['-RIGHT-'].update(visible=True)
+                        window['-ERROROUT-'].update('Syötetty koodi näkyy tässä.')
                     
                 if not students:
                     students[path2] = []
@@ -350,6 +354,7 @@ def main():
             if virhelista:  #check if dict exists
                 virhelista.clear()
             kategoria = ''
+            
             ### Lets make sure that all the category amounts are zero
             kokonaissumma = 0
             for virhe in list:
@@ -395,7 +400,6 @@ def main():
                       
                     mergedicts(virhelista,students, path2)
                    
-                
                 else:
                     if values['virheteksti'] != '':
                         virhekoodi.append(values['virheteksti'])
@@ -453,9 +457,7 @@ def main():
                                         max_new_points = max(alternative.vakavuus.values())
                                         if lukumaara in alternative.vakavuus:
                                             virhepisteet = virhepisteet + alternative.vakavuus[lukumaara]
-                                            alternative_added = True
-
-                                        
+                                            alternative_added = True       
                                         elif max_original_points > max_new_points:
                                             virhepisteet = virhepisteet + max_original_points
                                         #Also fine if mistake points are the same
@@ -472,20 +474,19 @@ def main():
                                 continue
                             if int(i) <= students[path2][virhe.virhe]:
                                 isoin = i
-                                
-                                    
+                                        
                         if students[path2][virhe.virhe]!=-1 and alternative_added == False and students[path2][virhe.virhe]!=0:
                             virhepisteet = virhepisteet + float(virhe.vakavuus[str(isoin)])
                         print("Virheen pisteet ovat :",round(virhepisteet,1))
                         alternative_added = False
-                
-
+            
                 virhepisteet = round(virhepisteet, 1)
                 virhelista['virhepisteet'] = virhepisteet
                 window['-virheout-'].update(virhepisteet)
             except UnboundLocalError:
                 print("Laita opiskelija eka.")
                 pass
+            
             try:
                 mergedicts(virhelista, students, path2)
                 print("Virhepisteiden laskun jälkeen STudents ja virhelista" ,students, virhelista)
@@ -526,7 +527,8 @@ def main():
                 print("File opening failed with error code:",e)
            
         # Example dict structure after nesting #
-        #{Opiskelija: {virhekoodi1: lkm1}, Opiskelija2: {Virhekoodi2: lkm2, virhekoodi3 : lkm3}}
+        #{Opiskelija: {TO0100: lkm1, virhekoodi: ['def main():..], virhepisteet: 4}, 
+        # Opiskelija2: {TO0101: lkm2, TO0102 : lkm3, virhepisteet : 2}}
 
 main()
  
