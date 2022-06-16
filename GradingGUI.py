@@ -285,8 +285,6 @@ def main():
                         if int(i) <= virhelista[virhe.virhe]:
                             isoin = i
                             
-                    
-                    
                     if virhelista[virhe.virhe]!=-1 and alternative_added == False:
                         print("Virheen pisteet ovat :",round(virhepisteet,1))
                         virhepisteet = virhepisteet + float(virhe.vakavuus[str(isoin)])
@@ -349,6 +347,41 @@ def main():
             window['-TREE-'].update(values = treedata)
             if virhelista:  #check if dict exists
                 virhelista.clear()
+            kategoria = ''
+            ### Lets make sure that all the category amounts are zero
+            kokonaissumma = 0
+            for virhe in list:
+                node = treedata.tree_dict[virhe.virhe]
+                parent_node = treedata.tree_dict[node.parent]
+                kategoria = parent_node.text
+                window['-TREE-'].update(key = kategoria, value = kokonaissumma)
+
+            if students[path2] != []:
+                for virhe in list:
+            
+                    if virhe.virhe in students[path2].keys():
+                        print("Listalla virheiden lukumäärä: ", virhe.lukumaara, "Virheen vakavuus: ", virhe.vakavuus)
+                            
+                        if students[path2][virhe.virhe] == 0:
+                            del students[path2][virhe.virhe]
+                            continue     
+                        node = treedata.tree_dict[virhe.virhe]
+                        parent_node = treedata.tree_dict[node.parent]
+
+                        if parent_node.parent == '':
+                            print("Enenen checkkiä kategoria on: ", kategoria)
+                            print(parent_node.text)
+                            print(kokonaissumma)
+                            if kategoria != parent_node.text and kategoria != '':
+                                print("KATEGORIA ON", kategoria, parent_node.text)
+                                window['-TREE-'].update(key = kategoria, value = kokonaissumma)
+                                kokonaissumma = 0
+                            
+                            kategoria = parent_node.text
+
+                            kokonaissumma = kokonaissumma + abs(students[path2][virhe.virhe])
+                            print("kokonaissumma VALUES ON TÄSSÄ VAIHEESSA OHJELMAA: ",kokonaissumma)
+                window['-TREE-'].update(key = kategoria, value = kokonaissumma)
 
 ###Adding checkboxes next to student names for easier marking ###
         if event.endswith('DOUBLE'):
