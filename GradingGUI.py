@@ -13,6 +13,7 @@ class Virhetiedot:
     severity = 0
     amount = 0
     alternative = []
+    exclude = []
 
 treedata = sg.TreeData()
 
@@ -33,6 +34,8 @@ def initiate_problem_list():
             v.amount = i['error_values'].keys()
             if 'alternatives' in i:
                 v.alternative = i['alternatives']
+            if 'exclude' in i:
+                v.exclude = i['exclude']
             lista.append(v)
             category = i['category']
         else:
@@ -43,6 +46,8 @@ def initiate_problem_list():
             v.amount = i['error_values'].keys()
             if 'alternatives' in i:
                 v.alternative = i['alternatives']
+            if 'exclude' in i:
+                v.exclude = i['exclude']
             lista.append(v)
             
     return lista
@@ -254,6 +259,14 @@ def count_alternative_points(error, baseinfo, selected_student, alternative_adde
                         continue
     return errorpoints, alternative_added
 
+def remove_excludes(selected_student, baseinfo):
+    for error in baseinfo:
+        if error.exclude:
+            for excluded in error.exclude:
+                if excluded in selected_student:
+                    del selected_student[excluded]
+            
+
     
 def main():
     errorlist = {}
@@ -388,10 +401,12 @@ def main():
                 kategoria = ''
                 category_sum = clear_sums(window, baseinfo, treedata)
                 selected_student = students[path2]
+                remove_excludes(selected_student, baseinfo) # Remove excluded error from list if found
                 for error in baseinfo:
                     if selected_student != []:
                         if error.error in selected_student.keys():
                             biggest = 0
+                            print(selected_student)
                             if selected_student[error.error] == 0:
                                 del selected_student[error.error]
                                 continue
@@ -404,14 +419,12 @@ def main():
                                     print("KATEGORIA ON", kategoria, parent_node.text)
                                     window['-TREE-'].update(key = kategoria, value = category_sum)
                                     category_sum = 0
-                            
                                 kategoria = parent_node.text
                                 category_sum = category_sum + abs(selected_student[error.error])
                                 window['-TREE-'].update(key = kategoria, value = category_sum)
                             errorpoints, alternative_added = count_alternative_points(error, baseinfo, selected_student, alternative_added, errorpoints)
                                                 
                             for i in error.amount:
-
                                 if i == 'All' and selected_student[error.error]==-1:
                                     errorpoints = errorpoints + int(error.severity[i])
                                     break
@@ -459,7 +472,6 @@ def main():
                     index = index - 1
                     window['-ERROROUT-'].update(students[path2]['virhekoodi'][index])
                     window['-RIGHT-'].update(visible = True)
-        
         if event == 'WRITE':
             try:
                 with open("Arvostellut.json", "w", encoding = 'utf-8') as outfile:
