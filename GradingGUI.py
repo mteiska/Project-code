@@ -235,6 +235,29 @@ def clear_sums(ikkuna, list, treedata):
         kategoria = parent_node.text
         ikkuna['-TREE-'].update(key = kategoria, value = category_sum)
     return category_sum
+
+def count_alternative_points(error, baseinfo, selected_student, alternative_added, errorpoints):
+    if error.alternative:
+        for j in error.alternative:
+            for alternative in baseinfo:
+                if j == alternative.error:
+                    amount = str(selected_student[error.error] )
+                    max_original_points = max(error.severity.values())
+                    max_new_points = max(alternative.severity.values())
+                    if amount in alternative.severity and alternative_added != True:
+                        errorpoints = errorpoints + alternative.severity[amount]
+                        print("errorpoints ovat", errorpoints)
+                        alternative_added = True       
+                    elif max_original_points > max_new_points:
+                        errorpoints = errorpoints + max_original_points
+                    elif max_new_points > max_original_points:
+                        errorpoints = errorpoints + max_new_points
+                    #Also fine if mistake points are the same
+                    elif selected_student[error.error]==-1:
+                        continue
+    print(errorpoints, alternative_added)
+    return errorpoints, alternative_added
+
     
 def main():
     errorlist = {}
@@ -320,7 +343,7 @@ def main():
                 for error in baseinfo:
                     if error.error in selected_student.keys():
                         if selected_student[error.error] == 0:
-                            del students[path2][error.error]
+                            del selected_student[error.error]
                             continue     
                         node = treedata.tree_dict[error.error]
                         parent_node = treedata.tree_dict[node.parent]
@@ -330,7 +353,7 @@ def main():
                                 window['-TREE-'].update(key = kategoria, value = category_sum)
                                 category_sum = 0  
                             kategoria = parent_node.text
-                            category_sum = category_sum + abs(students[path2][error.error])
+                            category_sum = category_sum + abs(selected_student[error.error])
                 window['-TREE-'].update(key = kategoria, value = category_sum)
             index = 0
 
@@ -343,24 +366,19 @@ def main():
             try:
                 error_text = values['virheteksti']
                 if errorlist != {} and path2 not in students:
-                    print("Ennen mergeä students ", students)
                     mergedicts(errorlist,students, path2)
                        
-
-                elif 'virhekoodi' in students[path2] :
-                    
-                    print("Tämä tulee kun virhekoodia on annettu ",students)
-                    if error_text == 'Laita tähän virhekoodia.':
+                if error_text == 'Laita tähän virhekoodia.':
                         error_text = '' 
+                elif 'virhekoodi' in students[path2] :
                     if error_text != '':
                         students[path2]['virhekoodi'].append(error_text) 
                     mergedicts(errorlist,students, path2)
                 else:
-                    if error_text == 'Laita tähän virhekoodia.':
-                        error_text = '' 
                     if error_text != '':
                         virhekoodi.append(error_text)
                     #Adding copy of a list so program does not override existing value due referencing
+                    #Reformatable
                         errorlist['virhekoodi'] = virhekoodi.copy() 
                         mergedicts(errorlist,students, path2)
                         virhekoodi.clear()
@@ -368,7 +386,6 @@ def main():
                     else:   
                         mergedicts(errorlist,students, path2)
                         
-                    
                 window['virheteksti'].update(value = '')
             except UnboundLocalError:
                 sg.popup_ok('Valitse opiskelija ja yritä uudelleen')
@@ -382,13 +399,13 @@ def main():
                 kategoria = ''
               
                 category_sum = clear_sums(window, baseinfo, treedata)
-                
+                selected_student = students[path2]
                 for error in baseinfo:
-                    if students[path2] != []:
-                        if error.error in students[path2].keys():
+                    if selected_student != []:
+                        if error.error in selected_student.keys():
                             biggest = 0
-                            if students[path2][error.error] == 0:
-                                del students[path2][error.error]
+                            if selected_student[error.error] == 0:
+                                del selected_student[error.error]
                                 continue     
                             node = treedata.tree_dict[error.error]
                             parent_node = treedata.tree_dict[node.parent]
@@ -401,41 +418,22 @@ def main():
                                     category_sum = 0
                             
                                 kategoria = parent_node.text
-                                category_sum = category_sum + abs(students[path2][error.error])
+                                category_sum = category_sum + abs(selected_student[error.error])
                                 window['-TREE-'].update(key = kategoria, value = category_sum)
-                            if error.alternative:
-                                for j in error.alternative:
-                                    for alternative in baseinfo:
-                                        if j == alternative.error:
-                                            amount = str(students[path2][error.error] )
-                                            max_original_points = max(error.severity.values())
-                                            max_new_points = max(alternative.severity.values())
-                                            if amount in alternative.severity and alternative_added != True:
-                                                errorpoints = errorpoints + alternative.severity[amount]
-                                                print("errorpoints ovat", errorpoints)
-                                                alternative_added = True       
-                                            elif max_original_points > max_new_points:
-                                                errorpoints = errorpoints + max_original_points
-                                            elif max_new_points > max_original_points:
-                                                errorpoints = errorpoints + max_new_points
-                                            #Also fine if mistake points are the same
-                                            elif students[path2][error.error]==-1:
-                                                continue
+                            errorpoints, alternative_added = count_alternative_points(error, baseinfo, selected_student, alternative_added, errorpoints)
                                                 
                             for i in error.amount:
 
-                                if i == 'All' and students[path2][error.error]==-1:
+                                if i == 'All' and selected_student[error.error]==-1:
                                     errorpoints = errorpoints + int(error.severity[i])
                                     break
                                 elif i == 'All' or i == 'virhekoodi':
                                     continue
                                 
-                                
-                                if int(i) <= students[path2][error.error]:
+                                if int(i) <= selected_student[error.error]:
                                     biggest = i
-                                print(students[path2][error.error], "I ON ", i)
                                 
-                            if students[path2][error.error]!=-1 and alternative_added == False and biggest != 0:
+                            if selected_student[error.error]!=-1 and alternative_added == False and biggest != 0:
                                 errorpoints = errorpoints + float(error.severity[str(biggest)])
                                 print("Virheen pisteet ovat :",round(errorpoints,1))
                                 
