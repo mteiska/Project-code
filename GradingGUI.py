@@ -6,6 +6,7 @@ from io import BytesIO
 from PIL import Image, ImageDraw
 
 #V0.1.1 added constraints to mistake calculations + fixed issues when student not chosen.
+#V0.2.1 added excluded errors.
 sg.theme('BlueMono')      
 font = ("Arial", 11)
 class Virhetiedot:
@@ -261,9 +262,12 @@ def count_alternative_points(error, baseinfo, selected_student, alternative_adde
 
 def remove_excludes(selected_student, baseinfo):
     for error in baseinfo:
+        if error.error in selected_student:
+            if selected_student[error.error] == 0:
+                del selected_student[error.error]
         if error.exclude:
             for excluded in error.exclude:
-                if excluded in selected_student:
+                if error.error in selected_student and excluded in selected_student:
                     del selected_student[excluded]
             
 
@@ -402,14 +406,13 @@ def main():
                 category_sum = clear_sums(window, baseinfo, treedata)
                 selected_student = students[path2]
                 remove_excludes(selected_student, baseinfo) # Remove excluded error from list if found
+                print(selected_student)
                 for error in baseinfo:
                     if selected_student != []:
                         if error.error in selected_student.keys():
                             biggest = 0
                             print(selected_student)
-                            if selected_student[error.error] == 0:
-                                del selected_student[error.error]
-                                continue
+                            
                             node = treedata.tree_dict[error.error]
                             parent_node = treedata.tree_dict[node.parent]
                             
