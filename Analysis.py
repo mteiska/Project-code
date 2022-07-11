@@ -6,34 +6,37 @@ import json
 import matplotlib.pyplot as plt
 
 #V0.0.1 Data is more machine readable now 
+#V0.0.2 Made graph and changed ticks for it.
 def main():
     with open('Arvostellut.json','r', encoding = 'utf-8') as f:
         data = json.loads(f.read())
     
-    df2 = pd.DataFrame([data])
-    print(data)
+    df = pd.DataFrame([data])
 
-    print(df2.T)
-    df2 = df2.T
-    print(df2)
+    print(df.T)
+    df = df.T
+    df['Opiskelija_data'] = df[0].apply(lambda x : break_dict(x))
+    df = df.explode('Opiskelija_data')
+    df['virhekoodi'],df['määrä'] = df['Opiskelija_data'].str
+    df.columns = ['joku', 'Opiskelija_data', 'virhekoodi', 'määrä']
+    df = df.drop(columns=['joku','Opiskelija_data'])
+    print(df)
     
-    df2['Opiskelija_data'] = df2[0].apply(lambda x : break_dict(x))
-    df2 = df2.explode('Opiskelija_data')
-    df2['virhekoodi'],df2['määrä'] = df2['Opiskelija_data'].str
-    df2.columns = ['joku', 'Opiskelija_data', 'virhekoodi', 'määrä']
-    df2 = df2.drop(columns=['joku','Opiskelija_data'])
-    print(df2)
-    
-    df2['virhekoodit']=df2['määrä'][df2['virhekoodi']=='virhekoodi']
-    df2 = df2[df2['virhekoodi'] != 'virhekoodi']
-    df2['virhepisteet']=df2['määrä'][df2['virhekoodi']=='virhepisteet']
-    df2 = df2[df2['virhekoodi'] != 'virhepisteet']
-    df2.fillna(0, inplace=True)
-    print(df2[df2['virhekoodi'].str.startswith("PK", na = False)])
-    dfg = df2.groupby('virhekoodi')['määrä'].agg('sum').reset_index()
+    df['virhekoodit']=df['määrä'][df['virhekoodi']=='virhekoodi']
+    df = df[df['virhekoodi'] != 'virhekoodi']
+    df['virhepisteet']=df['määrä'][df['virhekoodi']=='virhepisteet']
+    df = df[df['virhekoodi'] != 'virhepisteet']
+    df.fillna(0, inplace=True)
+    print(df[df['virhekoodi'].str.startswith("PK", na = False)])
+    dfg = df.groupby('virhekoodi')['määrä'].agg('sum').reset_index()
     print(dfg)
-    dfg.plot(x = 'virhekoodi', y = 'määrä', kind='bar')
+     
+    ax =dfg.plot(x = 'virhekoodi', y = 'määrä', kind='bar')
+    ax.yaxis.get_major_locator().set_params(integer=True)
+    ax.yaxis.set_major_locator(plt.MaxNLocator(10))
     plt.show()
+
+
 def break_dict(data):
     lista = []
     for key in data:
